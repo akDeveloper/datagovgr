@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  application:
+    build: .docker/php-cli
+    container_name: app-datagov-api
+    working_dir: /home/apiuser/project
+    volumes:
+      - .:/home/apiuser/project
+      - ./.docker/php-cli/php-ini-overrides.ini:/usr/local/etc/php/conf.d/99-overrides.ini
+      - ./.docker/php-cli/xdebug.ini:/usr/local/etc/php/conf.d/15-xdebug.ini
+    tty: true
+    environment:
+      XDEBUG_CONFIG: "client_host=host.docker.internal"

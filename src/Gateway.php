@@ -18,7 +18,9 @@ use Gov\Data\Exception\BadRequestException;
 use Gov\Data\Exception\UnauthorizedException;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Message\RequestFactoryInterface;
+use Gov\Data\Transformer\OasaRidershipTransformer;
 use Gov\Data\Transformer\RoadTrafficAtticaTransformer;
+use Gov\Data\Schema\OasaRidership\OasaRidershipCollection;
 use Gov\Data\Schema\RoadTrafficAttica\RoadTrafficAtticaCollection;
 
 class Gateway
@@ -26,12 +28,17 @@ class Gateway
     private const ENDPOINT = "https://data.gov.gr/api/v1/query";
 
     public const ROAD_TRAFFIC_ATTICA = "road_traffic_attica";
+    public const OASA_RIDERSHIP = "oasa_ridership";
 
     private const DATA = [
         self::ROAD_TRAFFIC_ATTICA => [
-            'collection' => RoadTrafficAtticaCollection::class,
-            'transformer' => RoadTrafficAtticaTransformer::class
-        ]
+            "collection" => RoadTrafficAtticaCollection::class,
+            "transformer" => RoadTrafficAtticaTransformer::class
+        ],
+        self::OASA_RIDERSHIP => [
+            'collection' => OasaRidershipCollection::class,
+            "transformer" => OasaRidershipTransformer::class
+        ],
     ];
 
     private RequestFactoryInterface $requestFactory;

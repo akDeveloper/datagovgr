@@ -6,6 +6,7 @@ namespace Gov\Data;
 
 use DateTime;
 use ReflectionClass;
+use Psr\Log\LoggerInterface;
 use InvalidArgumentException;
 use Gov\Data\Schema\ApiCollection;
 use Psr\Http\Message\UriInterface;
@@ -17,7 +18,6 @@ use Gov\Data\Exception\BadRequestException;
 use Gov\Data\Exception\UnauthorizedException;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Message\RequestFactoryInterface;
-use Gov\Data\Schema\RoadTrafficAttica\Traffic;
 use Gov\Data\Transformer\RoadTrafficAtticaTransformer;
 use Gov\Data\Schema\RoadTrafficAttica\RoadTrafficAtticaCollection;
 
@@ -38,7 +38,8 @@ class Gateway
 
     public function __construct(
         private readonly ClientInterface $client,
-        private readonly string $token
+        private readonly string $token,
+        private readonly LoggerInterface $logger
     ) {
         $this->requestFactory = Psr17FactoryDiscovery::findRequestFactory();
     }
@@ -59,7 +60,12 @@ class Gateway
         $request = $this->authorize($request);
         $request = $request->withUri($this->createUriQuery($request, $from, $to));
 
-        $response = $this->client->sendRequest($request);
+        try {
+            $response = $this->client->sendRequest($request);
+        } catch (ClientExceptionInterface $e) {
+            $this->logger->error($e->__toString());
+            throw new BadRequestException($e->getMessage(), 500, $e);
+        }
 
         $this->assertValid($response);
 

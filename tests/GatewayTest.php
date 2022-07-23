@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Gov\Data;
 
 use DateTime;
+use Psr\Log\NullLogger;
 use PHPUnit\Framework\TestCase;
 use Http\Mock\Client as MockClient;
 use Psr\Http\Client\ClientInterface;
@@ -38,7 +39,7 @@ class GatewayTest extends TestCase
         $response = $response->withBody($stream);
 
         $client = $this->mockResponse($client, $response);
-        $gateway = new Gateway($client, self::TOKEN);
+        $gateway = new Gateway($client, self::TOKEN, new NullLogger());
 
         $this->expectException(BadRequestException::class);
 
@@ -54,7 +55,7 @@ class GatewayTest extends TestCase
             ->withStatus(401);
 
         $client = $this->mockResponse($client, $response);
-        $gateway = new Gateway($client, self::TOKEN);
+        $gateway = new Gateway($client, self::TOKEN, new NullLogger());
         $this->expectException(UnauthorizedException::class);
 
         $response = $gateway->fetch(Gateway::ROAD_TRAFFIC_ATTICA, new DateTime(), new DateTime());
@@ -69,7 +70,7 @@ class GatewayTest extends TestCase
             ->withStatus(400);
 
         $client = $this->mockResponse($client, $response);
-        $gateway = new Gateway($client, self::TOKEN);
+        $gateway = new Gateway($client, self::TOKEN, new NullLogger());
         $this->expectException(BadRequestException::class);
 
         $response = $gateway->fetch(Gateway::ROAD_TRAFFIC_ATTICA, new DateTime(), new DateTime());
@@ -83,7 +84,7 @@ class GatewayTest extends TestCase
         $response = $response->withBody($stream);
 
         $client = $this->mockResponse($client, $response);
-        $gateway = new Gateway($client, self::TOKEN);
+        $gateway = new Gateway($client, self::TOKEN, new NullLogger());
 
         $response = $gateway->fetch(Gateway::ROAD_TRAFFIC_ATTICA, new DateTime(), new DateTime());
 

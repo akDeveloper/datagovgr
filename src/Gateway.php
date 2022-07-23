@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Gov\Data;
 
 use DateTime;
+use ReflectionClass;
+use InvalidArgumentException;
+use Gov\Data\Schema\ApiCollection;
 use Psr\Http\Message\UriInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestInterface;
@@ -15,13 +18,21 @@ use Gov\Data\Exception\UnauthorizedException;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Gov\Data\Schema\RoadTrafficAttica\Traffic;
+use Gov\Data\Transformer\RoadTrafficAtticaTransformer;
 use Gov\Data\Schema\RoadTrafficAttica\RoadTrafficAtticaCollection;
 
 class Gateway
 {
     private const ENDPOINT = "https://data.gov.gr/api/v1/query";
 
-    private const ROAD_TRAFFIC_ATTICA = "road_traffic_attica";
+    public const ROAD_TRAFFIC_ATTICA = "road_traffic_attica";
+
+    private const DATA = [
+        self::ROAD_TRAFFIC_ATTICA => [
+            'collection' => RoadTrafficAtticaCollection::class,
+            'transformer' => RoadTrafficAtticaTransformer::class
+        ]
+    ];
 
     private RequestFactoryInterface $requestFactory;
 
@@ -37,9 +48,14 @@ class Gateway
      * @throws BadRequestException
      * @throws ClientExceptionInterface
      */
-    public function getRoadTrafficAttica(DateTime $from, DateTime $to): RoadTrafficAtticaCollection
+    public function fetch(string $resource, DateTime $from, DateTime $to): ApiCollection
     {
-        $request = $this->requestFactory->createRequest('GET', $this->getResourceEndpoint(self::ROAD_TRAFFIC_ATTICA));
+        if (!array_key_exists($resource, self::DATA)) {
+            throw new InvalidArgumentException(
+                sprintf('Resource `%s` does not exists', $resource)
+            );
+        }
+        $request = $this->requestFactory->createRequest('GET', $this->getResourceEndpoint($resource));
         $request = $this->authorize($request);
         $request = $request->withUri($this->createUriQuery($request, $from, $to));
 
@@ -53,18 +69,14 @@ class Gateway
             throw new BadRequestException(sprintf("Invalid response body [%s]", json_last_error_msg()), 400);
         }
 
-        $items = array_map(function (array $item) {
-            return new Traffic(
-                $item['deviceid'],
-                $item['countedcars'],
-                DateTime::createFromFormat("Y-m-d\TH:i:s\Z", $item['appprocesstime']),
-                $item['road_name'],
-                $item['road_info'],
-                $item['average_speed']
-            );
+        $transformer = new ReflectionClass(self::DATA[$resource]['transformer']);
+        $items = array_map(static function (array $item) use ($transformer) {
+            return $transformer->newInstance()->transform($item);
         }, $payload);
 
-        return new RoadTrafficAtticaCollection($items);
+        $collection = new ReflectionClass(self::DATA[$resource]['collection']);
+
+        return $collection->newInstanceArgs([$items]);
     }
 
     private function getResourceEndpoint(string $resource): string

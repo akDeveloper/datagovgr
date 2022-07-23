@@ -42,7 +42,7 @@ class GatewayTest extends TestCase
 
         $this->expectException(BadRequestException::class);
 
-        $response = $gateway->getRoadTrafficAttica(new DateTime(), new DateTime());
+        $response = $gateway->fetch(Gateway::ROAD_TRAFFIC_ATTICA, new DateTime(), new DateTime());
     }
 
     public function testShouldCatchNotAuthorizedRequest(): void
@@ -57,7 +57,7 @@ class GatewayTest extends TestCase
         $gateway = new Gateway($client, self::TOKEN);
         $this->expectException(UnauthorizedException::class);
 
-        $response = $gateway->getRoadTrafficAttica(new DateTime(), new DateTime());
+        $response = $gateway->fetch(Gateway::ROAD_TRAFFIC_ATTICA, new DateTime(), new DateTime());
     }
 
     public function testShouldCatchBadRequestRequest(): void
@@ -72,7 +72,7 @@ class GatewayTest extends TestCase
         $gateway = new Gateway($client, self::TOKEN);
         $this->expectException(BadRequestException::class);
 
-        $response = $gateway->getRoadTrafficAttica(new DateTime(), new DateTime());
+        $response = $gateway->fetch(Gateway::ROAD_TRAFFIC_ATTICA, new DateTime(), new DateTime());
     }
 
     public function testShouldFetchRoadTrafficAttica(): void
@@ -85,7 +85,7 @@ class GatewayTest extends TestCase
         $client = $this->mockResponse($client, $response);
         $gateway = new Gateway($client, self::TOKEN);
 
-        $response = $gateway->getRoadTrafficAttica(new DateTime(), new DateTime());
+        $response = $gateway->fetch(Gateway::ROAD_TRAFFIC_ATTICA, new DateTime(), new DateTime());
 
         $this->assertInstanceOf(RoadTrafficAtticaCollection::class, $response);
         $this->assertEquals(3, $response->count());
